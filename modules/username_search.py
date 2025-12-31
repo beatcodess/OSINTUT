@@ -44,20 +44,9 @@ PLATFORMS={
 "Cracked":(["https://cracked.io/{}"],5),
 "Breached":(["https://breached.vc/User-{}"],5),
 "XSS":(["https://xss.is/user/{}"],5),
-"BlackHatWorld":(["https://www.blackhatworld.com/members/{}.{}"],5),
-"LOLZ":(["https://lolz.guru/members/{}"],5),
-"Antichat":(["https://antichat.ru/members/{}"],5),
-"Doxbin":(["https://doxbin.org/user/{}","https://doxbin.com/user/{}"],5),
-"GreySec":(["https://greysec.net/members/{}"],5),
-"OpenBugBounty":(["https://www.openbugbounty.org/researchers/{}"],4),
-"HackThisSite":(["https://www.hackthissite.org/user/view/{}"],4),
-"PacketStorm":(["https://packetstormsecurity.com/user/{}"],4),
-"DefconForums":(["https://forum.defcon.org/member.php?action=profile&uid={}"],4),
-"ExploitIN":(["https://exploit.in/members/{}"],5),
-"Underc0de":(["https://underc0de.org/foro/index.php?action=profile;u={}"],5)
+"Doxbin":(["https://doxbin.org/user/{}","https://doxbin.com/user/{}"],5)
 }
 
-VARIANTS=["{}","@{}","{}.html","{}/","u/{}","user/{}","users/{}","profile/{}","member/{}"]
 CACHE={}
 TTL=3600
 
@@ -80,20 +69,20 @@ def _mutations(u):
         out.add(f"{u}_{i}")
     return out
 
-def _expand():
+def _expand_urls():
     urls=[]
     for bases,_ in PLATFORMS.values():
-        for b,v in itertools.product(bases,VARIANTS):
-            urls.append(b.replace("{}",v))
+        for b in bases:
+            urls.append(b)
     return urls
 
-ALL_URLS=_expand()
+ALL_URLS=_expand_urls()
 
 async def _check(session,sem,url):
     async with sem:
         try:
-            async with session.get(url,allow_redirects=True) as r:
-                if r.status in (200,301,302) and "login" not in str(r.url):
+            async with session.get(url,allow_redirects=True,timeout=aiohttp.ClientTimeout(total=10)) as r:
+                if r.status in (200,301,302) and "login" not in str(r.url).lower():
                     return url
         except:
             return None
@@ -103,19 +92,19 @@ async def _runner(username,use_tor):
     if key in CACHE and time.time()-CACHE[key]["t"]<TTL:
         return CACHE[key]["d"]
     found={}
-    sem=asyncio.Semaphore(70 if use_tor else 140)
+    sem=asyncio.Semaphore(50 if use_tor else 120)
     proxy="socks5h://127.0.0.1:9050" if use_tor and _tor_available() else None
-    conn=aiohttp.TCPConnector(limit=70 if use_tor else 140,ssl=False)
+    conn=aiohttp.TCPConnector(limit=50 if use_tor else 120,ssl=False)
     async with aiohttp.ClientSession(connector=conn) as s:
         tasks=[]
         for m in _mutations(username):
             for u in ALL_URLS:
-                tasks.append(_check(s,sem,u.format(m)))
+                tasks.append(_check(s,sem,u.replace("{}",m)))
         for r in await asyncio.gather(*tasks):
             if r:
                 dom=r.split("/")[2]
                 for name,(bases,w) in PLATFORMS.items():
-                    if any(b.split("/")[2] in dom for b in bases):
+                    if any(b.replace("https://","").split("/")[0] in dom for b in bases):
                         found.setdefault(name,{"weight":w,"urls":[]})["urls"].append(r)
     CACHE[key]={"t":time.time(),"d":found}
     return found
