@@ -1,0 +1,1 @@
+def run(d): d['plugin']='loaded'
