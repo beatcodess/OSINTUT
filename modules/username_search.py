@@ -1,27 +1,135 @@
-import requests,difflib
+import requests
 
-sites={
-"Twitter":"https://twitter.com/{}",
-"Instagram":"https://instagram.com/{}",
+SITES={
 "GitHub":"https://github.com/{}",
-"Reddit":"https://reddit.com/user/{}",
-"TikTok":"https://tiktok.com/@{}"
+"GitLab":"https://gitlab.com/{}",
+"Bitbucket":"https://bitbucket.org/{}",
+"SourceForge":"https://sourceforge.net/u/{}/profile",
+"CodePen":"https://codepen.io/{}",
+"Replit":"https://replit.com/@{}",
+"HackerOne":"https://hackerone.com/{}",
+"Bugcrowd":"https://bugcrowd.com/{}",
+"ExploitDB":"https://www.exploit-db.com/?author={}",
+"Keybase":"https://keybase.io/{}",
+"Pastebin":"https://pastebin.com/u/{}",
+"Giters":"https://giters.com/{}",
+"GreasyFork":"https://greasyfork.org/en/users/{}",
+"OpenBugBounty":"https://www.openbugbounty.org/researcher/{}",
+"DevTo":"https://dev.to/{}",
+"Medium":"https://medium.com/@{}",
+"Reddit":"https://www.reddit.com/user/{}",
+"RedditOld":"https://old.reddit.com/user/{}",
+"HackerNews":"https://news.ycombinator.com/user?id={}",
+"StackOverflow":"https://stackoverflow.com/users/story/{}",
+"StackExchange":"https://stackexchange.com/users/{}",
+"SuperUser":"https://superuser.com/users/{}",
+"ServerFault":"https://serverfault.com/users/{}",
+"AskUbuntu":"https://askubuntu.com/users/{}",
+"Twitter":"https://twitter.com/{}",
+"X":"https://x.com/{}",
+"Instagram":"https://instagram.com/{}",
+"Facebook":"https://facebook.com/{}",
+"TikTok":"https://tiktok.com/@{}",
+"Snapchat":"https://www.snapchat.com/add/{}",
+"Telegram":"https://t.me/{}",
+"TelegramUser":"https://t.me/s/{}",
+"Discord":"https://discord.com/users/{}",
+"Steam":"https://steamcommunity.com/id/{}",
+"SteamRep":"https://steamrep.com/search?q={}",
+"EpicGames":"https://www.epicgames.com/id/{}",
+"BattleNet":"https://battle.net/account/management/{}",
+"Roblox":"https://www.roblox.com/user.aspx?username={}",
+"Minecraft":"https://namemc.com/profile/{}",
+"Hypixel":"https://hypixel.net/members/{}",
+"RuneScape":"https://secure.runescape.com/m=hiscore_oldschool/hiscorepersonal?user1={}",
+"Chess":"https://www.chess.com/member/{}",
+"Lichess":"https://lichess.org/@/{}",
+"TryHackMe":"https://tryhackme.com/p/{}",
+"HackTheBox":"https://app.hackthebox.com/users/{}",
+"RootMe":"https://www.root-me.org/{}",
+"OverTheWire":"https://overthewire.org/wargames/{}",
+"CTFtime":"https://ctftime.org/user/{}",
+"PentesterLab":"https://pentesterlab.com/profile/{}",
+"BugcrowdForum":"https://forum.bugcrowd.com/u/{}",
+"0x00sec":"https://0x00sec.org/u/{}",
+"Nulled":"https://www.nulled.to/user/{}",
+"Cracked":"https://cracked.io/{}",
+"LeakForums":"https://leakforums.is/user/{}",
+"RaidForums":"https://raidforums.com/User-{}",
+"HackForums":"https://hackforums.net/member.php?action=profile&uid={}",
+"Breached":"https://breached.vc/User-{}",
+"Sinister":"https://sinister.ly/User-{}",
+"XSS":"https://xss.is/user/{}",
+"BlackHatWorld":"https://www.blackhatworld.com/members/{}.{}",
+"LOLZ":"https://lolz.guru/members/{}",
+"Antichat":"https://antichat.ru/members/{}",
+"Cryptohack":"https://cryptohack.org/user/{}",
+"CryptoCompare":"https://www.cryptocompare.com/members/{}",
+"BitcoinTalk":"https://bitcointalk.org/index.php?action=profile;u={}",
+"Ethereum":"https://etherscan.io/address/{}",
+"OpenSea":"https://opensea.io/{}",
+"Gitcoin":"https://gitcoin.co/{}",
+"IPFS":"https://gateway.ipfs.io/ipfs/{}",
+"Keyoxide":"https://keyoxide.org/{}",
+"Mastodon":"https://mastodon.social/@{}",
+"Gab":"https://gab.com/{}",
+"TruthSocial":"https://truthsocial.com/@{}",
+"VK":"https://vk.com/{}",
+"OK":"https://ok.ru/{}",
+"Douban":"https://www.douban.com/people/{}",
+"Weibo":"https://weibo.com/{}",
+"Bilibili":"https://space.bilibili.com/{}",
+"SoundCloud":"https://soundcloud.com/{}",
+"Spotify":"https://open.spotify.com/user/{}",
+"Bandcamp":"https://bandcamp.com/{}",
+"LastFM":"https://www.last.fm/user/{}",
+"DeviantArt":"https://www.deviantart.com/{}",
+"ArtStation":"https://www.artstation.com/{}",
+"Behance":"https://www.behance.net/{}",
+"Dribbble":"https://dribbble.com/{}",
+"Flickr":"https://www.flickr.com/people/{}",
+"500px":"https://500px.com/{}",
+"Imgur":"https://imgur.com/user/{}",
+"Unsplash":"https://unsplash.com/@{}",
+"Pexels":"https://www.pexels.com/@{}",
+"AboutMe":"https://about.me/{}",
+"Gravatar":"https://en.gravatar.com/{}",
+"AngelList":"https://angel.co/{}",
+"Crunchbase":"https://www.crunchbase.com/person/{}",
+"ProductHunt":"https://www.producthunt.com/@{}",
+"IndieHackers":"https://www.indiehackers.com/{}",
+"Kaggle":"https://www.kaggle.com/{}",
+"LeetCode":"https://leetcode.com/{}",
+"HackerRank":"https://www.hackerrank.com/{}",
+"Codeforces":"https://codeforces.com/profile/{}",
+"AtCoder":"https://atcoder.jp/users/{}",
+"TopCoder":"https://www.topcoder.com/members/{}",
+"OpenSeaTest":"https://testnets.opensea.io/{}",
+"PyPI":"https://pypi.org/user/{}",
+"NPM":"https://www.npmjs.com/~{}",
+"RubyGems":"https://rubygems.org/profiles/{}",
+"Packagist":"https://packagist.org/users/{}",
+"CPAN":"https://metacpan.org/author/{}",
+"DockerHub":"https://hub.docker.com/u/{}",
+"Quora":"https://www.quora.com/profile/{}",
+"Slideshare":"https://www.slideshare.net/{}",
+"Scribd":"https://www.scribd.com/{}",
+"Academia":"https://independent.academia.edu/{}",
+"ResearchGate":"https://www.researchgate.net/profile/{}",
+"ORCID":"https://orcid.org/{}",
+"BuyMeACoffee":"https://www.buymeacoffee.com/{}",
+"Patreon":"https://www.patreon.com/{}",
+"KoFi":"https://ko-fi.com/{}"
 }
 
-def find_socials(u,p):
+def find_socials(u,p=None):
     r={}
     px={"http":p,"https":p} if p else None
-    for k,v in sites.items():
+    for k,v in SITES.items():
         try:
-            x=requests.get(v.format(u),timeout=5,proxies=px)
-            if x.status_code==200:
+            x=requests.get(v.format(u),timeout=5,proxies=px,allow_redirects=True)
+            if x.status_code in (200,301,302):
                 r[k]=v.format(u)
         except:
             pass
     return r
-
-def alias_score(u,s):
-    a={}
-    for k,v in s.items():
-        a[k]=round(difflib.SequenceMatcher(None,u,u).ratio(),2)
-    return a
