@@ -1,77 +1,84 @@
 import tkinter as tk
 from tkinter import ttk
-import threading, json, webbrowser
-from modules.username_search import find_socials,alias_score
-from modules.web_mentions import search_mentions,timeline
-from modules.image_search import search_images
-from modules.pdf_search import search_pdfs
-from modules.utils import save_report,html_report,pdf_report,load_plugins
+import threading,webbrowser
 
-def run():
-    root=tk.Tk()
-    dark=tk.BooleanVar()
-    root.title("beatcodes")
-    root.geometry("1000x650")
+try:
+    from modules import username_search
+except:
+    username_search=None
 
-    style=ttk.Style()
-    def theme():
-        if dark.get():
-            style.theme_use("clam")
-            root.configure(bg="#222")
-        else:
-            style.theme_use("default")
-    theme()
+root=tk.Tk()
+root.title("beatcodes")
+root.geometry("1000x650")
 
-    top=ttk.Frame(root,padding=10)
-    top.pack(fill="x")
+def open_link(e):
+    webbrowser.open("https://guns.lol/beatcodes")
 
-    brand=tk.Label(top,text="beatcodes",fg="blue",cursor="hand2",font=("Arial",14,"bold"))
-    brand.grid(row=0,column=2,sticky="e")
-    brand.bind("<Button-1>",lambda e:webbrowser.open("https://guns.lol/beatcodes"))
+title=tk.Label(root,text="beatcodes",fg="#4da6ff",font=("Segoe UI",18,"bold"),cursor="hand2")
+title.pack(pady=6)
+title.bind("<Button-1>",open_link)
 
-    name=tk.StringVar()
-    city=tk.StringVar()
-    user=tk.StringVar()
-    proxy=tk.StringVar()
+notebook=ttk.Notebook(root)
+notebook.pack(expand=True,fill="both")
 
-    for i,(t,v) in enumerate([("Name",name),("City",city),("Username",user),("Proxy (optional)",proxy)]):
-        ttk.Label(top,text=t).grid(row=i,column=0,sticky="w")
-        ttk.Entry(top,textvariable=v,width=45).grid(row=i,column=1,padx=5,pady=2)
+def make_tab(name):
+    f=ttk.Frame(notebook)
+    notebook.add(f,text=name)
+    return f
 
-    ttk.Checkbutton(top,text="Dark Mode",variable=dark,command=theme).grid(row=1,column=2)
+username_tab=make_tab("Username")
+name_tab=make_tab("Name")
+image_tab=make_tab("Images")
+pdf_tab=make_tab("PDFs")
+mentions_tab=make_tab("Mentions")
+output_tab=make_tab("Output")
 
-    tabs=ttk.Notebook(root)
-    tabs.pack(fill="both",expand=True)
+output=tk.Text(output_tab,wrap="word")
+output.pack(expand=True,fill="both")
 
-    views={}
-    for t in ["Socials","Mentions","Images","PDFs","Timeline","Aliases","Log"]:
-        f=ttk.Frame(tabs)
-        tabs.add(f,text=t)
-        txt=tk.Text(f,wrap="word")
-        txt.pack(fill="both",expand=True)
-        views[t]=txt
+def log(t):
+    output.insert(tk.END,t+"\n")
+    output.see(tk.END)
 
-    prog=ttk.Progressbar(root,mode="indeterminate")
-    prog.pack(fill="x")
+username_frame=ttk.Frame(username_tab)
+username_frame.pack(pady=20)
 
-    def worker():
-        prog.start()
-        data={"name":name.get(),"city":city.get(),"username":user.get()}
-        data["social_accounts"]=find_socials(user.get(),proxy.get())
-        data["mentions"]=search_mentions(name.get(),city.get(),user.get())
-        data["images"]=search_images(name.get(),city.get())
-        data["pdfs"]=search_pdfs(name.get(),city.get())
-        data["timeline"]=timeline(data["mentions"])
-        data["alias_scores"]=alias_score(user.get(),data["social_accounts"])
-        load_plugins(data)
-        save_report(data)
-        for k in ["Socials","Mentions","Images","PDFs","Timeline","Aliases"]:
-            views[k].insert("end",json.dumps(data.get(k.lower(),data.get(k)),indent=2))
-        views["Log"].insert("end","Saved to output/report.json")
-        prog.stop()
+ttk.Label(username_frame,text="Username").grid(row=0,column=0,padx=6)
+username_entry=ttk.Entry(username_frame,width=30)
+username_entry.grid(row=0,column=1,padx=6)
 
-    ttk.Button(top,text="Run",command=lambda:threading.Thread(target=worker,daemon=True).start()).grid(row=4,column=1,sticky="e")
-    ttk.Button(top,text="Export HTML",command=html_report).grid(row=4,column=2,sticky="w")
-    ttk.Button(top,text="Export PDF",command=pdf_report).grid(row=4,column=2,sticky="e")
+use_tor_var=tk.BooleanVar(value=False)
+tor_toggle=ttk.Checkbutton(username_frame,text="Use Tor Routing",variable=use_tor_var)
+tor_toggle.grid(row=0,column=2,padx=10)
 
-    root.mainloop()
+def run_username():
+    output.delete("1.0",tk.END)
+    u=username_entry.get().strip()
+    if not u:
+        return
+    log("Running username OSINT scan...")
+    if not username_search:
+        log("username_search module not found")
+        return
+    r=username_search.find_socials(u,tor=use_tor_var.get())
+    for site,data in r.items():
+        log(f"[{site}] confidence={data['weight']}")
+        for url in set(data["urls"]):
+            log("  "+url)
+        log("")
+    log("Done.")
+
+ttk.Button(username_tab,text="Run Username Scan",command=lambda:threading.Thread(target=run_username,daemon=True).start()).pack(pady=10)
+
+def placeholder(tab,name):
+    f=ttk.Frame(tab)
+    f.pack(pady=40)
+    ttk.Label(f,text=f"{name} module connected").pack()
+    ttk.Button(f,text="Run",command=lambda:log(f"{name} scan not implemented in this build")).pack(pady=6)
+
+placeholder(name_tab,"Name")
+placeholder(image_tab,"Image")
+placeholder(pdf_tab,"PDF")
+placeholder(mentions_tab,"Mentions")
+
+root.mainloop()
